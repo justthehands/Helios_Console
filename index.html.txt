@@ -1,0 +1,84 @@
+<!-- index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DARPA // HELIOS Access Portal</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div class="badge">U.S. GOV</div>
+      <div class="title">
+        <h1>DARPA // HELIOS</h1>
+        <p class="sub">Directed Energy Platform // Restricted Access Portal</p>
+      </div>
+      <div class="status">
+        <span class="dot"></span>
+        <span id="sysStatus">ACCESS REQUIRED</span>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h2>NOTICE</h2>
+      <p class="muted">
+        This system is monitored. Unauthorized access is prohibited. All activity may be recorded.
+      </p>
+
+      <div class="notice warn">
+        CLASSIFICATION: TOP SECRET // NOFORN<br/>
+        USER AUTHENTICATION REQUIRED
+      </div>
+
+      <div class="form">
+        <label class="muted small">ACCESS PASSPHRASE</label>
+        <div class="row">
+          <input id="pw" placeholder="ENTER PASSPHRASE" autocomplete="off" />
+          <button id="loginBtn">VERIFY</button>
+        </div>
+        <div id="msg" class="notice">Awaiting authentication…</div>
+      </div>
+
+      <div class="footer">
+        <button id="resetBtn" class="ghost">Reset Local Session</button>
+        <span class="muted small">Tip: run fullscreen for immersion.</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    const msg = document.getElementById("msg");
+    const pw = document.getElementById("pw");
+    const sys = document.getElementById("sysStatus");
+
+    const p = getProgress();
+    sys.textContent = p.portalUnlocked ? "PORTAL UNLOCKED" : "ACCESS REQUIRED";
+
+    // If already unlocked, go straight to memo (prevents bypass)
+    if (p.portalUnlocked) {
+      window.location.href = "memo.html";
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      const ok = checkCode("portal", pw.value);
+      if (ok){
+        unlock("portal");
+        msg.className = "notice good";
+        msg.textContent = "AUTHENTICATION ACCEPTED // OPENING MEMORANDUM…";
+        setTimeout(() => window.location.href = "memo.html", 650);
+      } else {
+        msg.className = "notice bad";
+        msg.textContent = "AUTHENTICATION FAILED // INVALID PASSPHRASE";
+      }
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      resetAll();
+      location.reload();
+    });
+  </script>
+</body>
+</html>

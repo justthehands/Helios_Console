@@ -1,0 +1,82 @@
+<!-- memo.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HELIOS // Target Authorization Memorandum</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div class="badge">DARPA</div>
+      <div class="title">
+        <h1>TARGET AUTHORIZATION MEMORANDUM</h1>
+        <p class="sub">HELIOS Platform // Sanitized Excerpt</p>
+      </div>
+      <div class="status">
+        <span class="dot"></span>
+        <span>READ-ONLY</span>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h2>DOCUMENT CONTROL</h2>
+
+      <div class="notice warn">
+        CLASSIFICATION: TOP SECRET // NOFORN<br/>
+        CONTROL: HELIOS-ONLY // ORCON<br/>
+        DOCUMENT ID: HELIOS/JSAC/TA-07
+      </div>
+
+      <p class="muted">
+        This memorandum authorizes one-time targeting and engagement for the HELIOS platform against a
+        non-state anomalous infrastructure target. This document is provided as a sanitized operational
+        excerpt for authorized operator continuity.
+      </p>
+
+      <h2 style="margin-top:14px;">AUTHORITY</h2>
+      <div class="notice">
+        Authorization is granted under Joint Directive 7-HELIOS and associated emergency continuity provisions.
+        This authorization is valid only during the current strike window and is void upon closure of the window
+        or failure to verify target coordinates.
+      </div>
+
+      <h2 style="margin-top:14px;">TARGETING REQUIREMENTS</h2>
+      <ul class="muted" style="line-height:1.6; margin-top:10px;">
+        <li>Coordinate entry must use <strong>decimal degrees</strong>.</li>
+        <li>Entry must match the authorized target packet <strong>exactly</strong>.</li>
+        <li>Do not substitute map references, place names, or approximations.</li>
+      </ul>
+
+      <h2 style="margin-top:14px;">ENGAGEMENT CONSTRAINTS</h2>
+      <div class="notice">
+        This is not a conventional facility. The target functions as a structural node within a larger distributed
+        mechanism. Neutralization must be total. Partial damage is insufficient.
+      </div>
+
+      <div class="notice warn" style="margin-top:14px;">
+        OPERATOR PHRASE REFERENCE (RECOVERED COMMS):<br/>
+        <strong style="letter-spacing:.12em; color: var(--accent);">PUT IT TO REST</strong>
+      </div>
+
+      <div class="notice" style="margin-top:14px;">
+        Operator verification may include third-party anti-automation controls. This is not a joke.
+      </div>
+
+      <div class="footer" style="justify-content:flex-end;">
+        <button id="proceedBtn" class="danger">Proceed to Targeting →</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    requireUnlockOrRedirect("portal", "index.html");
+    document.getElementById("proceedBtn").addEventListener("click", () => {
+      window.location.href = "targeting.html";
+    });
+  </script>
+</body>
+</html>

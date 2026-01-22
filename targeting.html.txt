@@ -1,0 +1,257 @@
+<!-- targeting.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HELIOS // Targeting & Fire Control</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div class="badge">DARPA</div>
+      <div class="title">
+        <h1>HELIOS // TARGETING</h1>
+        <p class="sub">Target Validation + Fire Authorization</p>
+      </div>
+      <div class="status">
+        <span class="dot"></span>
+        <span id="sysStatus">STANDBY</span>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h2>STRIKE WINDOW</h2>
+      <div class="notice warn">
+        WINDOW REMAINING: <strong id="countdown">09:59</strong><br/>
+        NOTE: Window timer is advisory only.
+      </div>
+
+      <h2 style="margin-top:14px;">TARGET COORDINATES</h2>
+      <p class="muted">Decimal degrees only. Enter exact values.</p>
+
+      <div class="form">
+        <div class="row">
+          <div style="flex:1">
+            <label class="muted small">LATITUDE</label>
+            <input id="lat" placeholder="e.g., 38.313467" autocomplete="off" />
+          </div>
+          <div style="flex:1">
+            <label class="muted small">LONGITUDE</label>
+            <input id="lon" placeholder="e.g., -111.147811" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="validateBtn">VALIDATE</button>
+          <button id="fireBtn" class="danger" disabled>FIRE</button>
+          <a class="link" href="memo.html">← Back to memo</a>
+        </div>
+
+        <div id="valMsg" class="notice">No target validated.</div>
+        <div id="fireMsg" class="notice">Fire control locked.</div>
+      </div>
+    </section>
+
+    <!-- Fake reCAPTCHA modal -->
+    <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modalCard">
+        <div class="modalTop">
+          <div class="recapTitle">reCAPTCHA</div>
+          <div class="muted small">compliance automation</div>
+        </div>
+
+        <div class="recapBox">
+          <label class="checkRow">
+            <input type="checkbox" id="robotCheck" />
+            <span>I’m not a robot</span>
+          </label>
+
+          <div id="captchaPrompt" class="notice" style="margin-top:10px;">
+            Select all squares with <strong>tentacles</strong>.
+          </div>
+
+          <div class="gridCaptcha" aria-label="captcha grid">
+            <button class="capCell" data-t="0">🧱</button>
+            <button class="capCell" data-t="1">🐙</button>
+            <button class="capCell" data-t="0">🧱</button>
+            <button class="capCell" data-t="1">🐙</button>
+            <button class="capCell" data-t="0">🧱</button>
+            <button class="capCell" data-t="0">🧱</button>
+            <button class="capCell" data-t="0">🧱</button>
+            <button class="capCell" data-t="1">🐙</button>
+            <button class="capCell" data-t="0">🧱</button>
+          </div>
+
+          <div id="capMsg" class="notice warn" style="margin-top:10px;">Complete verification to proceed.</div>
+
+          <div class="row" style="margin-top:10px;">
+            <button id="capCancel" class="ghost">CANCEL</button>
+            <button id="capVerify">VERIFY</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="panel" style="margin-top:16px;">
+      <h2>OUTPUT</h2>
+      <div id="out" class="notice">Awaiting operator action.</div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    requireUnlockOrRedirect("portal", "index.html");
+
+    const sys = document.getElementById("sysStatus");
+    const latEl = document.getElementById("lat");
+    const lonEl = document.getElementById("lon");
+    const validateBtn = document.getElementById("validateBtn");
+    const fireBtn = document.getElementById("fireBtn");
+    const valMsg = document.getElementById("valMsg");
+    const fireMsg = document.getElementById("fireMsg");
+    const out = document.getElementById("out");
+
+    // Countdown drama (cosmetic only)
+    const countdownEl = document.getElementById("countdown");
+    startCosmeticCountdown(10 * 60, countdownEl); // 10 minutes
+
+    // Modal elements
+    const modal = document.getElementById("modal");
+    const robotCheck = document.getElementById("robotCheck");
+    const capMsg = document.getElementById("capMsg");
+    const capCancel = document.getElementById("capCancel");
+    const capVerify = document.getElementById("capVerify");
+    const capCells = Array.from(document.querySelectorAll(".capCell"));
+    const captchaPrompt = document.getElementById("captchaPrompt");
+
+    capCells.forEach(btn => {
+      btn.addEventListener("click", () => btn.classList.toggle("selected"));
+    });
+
+    function setStatus(t){ sys.textContent = t; }
+
+    function openModal(){
+      modal.classList.remove("hidden");
+      robotCheck.checked = false;
+      capCells.forEach(b => b.classList.remove("selected"));
+      capMsg.className = "notice warn";
+      capMsg.textContent = "Complete verification to proceed.";
+
+      // Escalate joke after 2 fails
+      const fails = getCaptchaFails();
+      if (fails >= 2){
+        captchaPrompt.className = "notice warn";
+        captchaPrompt.innerHTML = `Additional verification required.<br/>Select all squares with <strong>eldritch horrors</strong>.`;
+      } else {
+        captchaPrompt.className = "notice";
+        captchaPrompt.innerHTML = `Select all squares with <strong>tentacles</strong>.`;
+      }
+    }
+    function closeModal(){ modal.classList.add("hidden"); }
+
+    let targetOk = false;
+
+    validateBtn.addEventListener("click", () => {
+      const lat = parseDecimal(latEl.value);
+      const lon = parseDecimal(lonEl.value);
+
+      if (lat === null || lon === null){
+        targetOk = false;
+        fireBtn.disabled = true;
+        valMsg.className = "notice bad";
+        valMsg.textContent = "ERROR // Invalid decimal degrees. Example: 38.313467 and -111.147811";
+        fireMsg.className = "notice";
+        fireMsg.textContent = "Fire control locked.";
+        setStatus("STANDBY");
+        return;
+      }
+
+      const entered = canonicalPair(lat, lon);
+      const expected = canonicalPair(TARGET.lat, TARGET.lon);
+
+      if (entered === expected){
+        targetOk = true;
+        fireBtn.disabled = false;
+        valMsg.className = "notice good";
+        valMsg.textContent = "TARGET ACQUIRED // Coordinates verified.";
+        fireMsg.className = "notice warn";
+        fireMsg.textContent = "FIRE READY // Verification required.";
+        setStatus("READY");
+        resetInvalidTargetAttempts(); // success resets drama counter
+      } else {
+        targetOk = false;
+        fireBtn.disabled = true;
+
+        const n = incrementInvalidTargetAttempts(); // drama counter
+        if (n >= 3){
+          valMsg.className = "notice bad";
+          valMsg.textContent = "WARNING // MULTIPLE INVALID TARGET PACKETS DETECTED // AUDIT FLAG: PENDING";
+        } else {
+          valMsg.className = "notice warn";
+          valMsg.textContent = "TARGET ACQUISITION FAILED // Coordinates do not match authorized target.";
+        }
+
+        fireMsg.className = "notice";
+        fireMsg.textContent = "Fire control locked.";
+        setStatus("STANDBY");
+      }
+    });
+
+    fireBtn.addEventListener("click", () => {
+      if (!targetOk){
+        out.className = "notice bad";
+        out.textContent = "DENIED // No verified target.";
+        return;
+      }
+      openModal();
+    });
+
+    capCancel.addEventListener("click", () => {
+      closeModal();
+      out.className = "notice";
+      out.textContent = "Verification cancelled.";
+    });
+
+    capVerify.addEventListener("click", () => {
+      // The fake captcha rule stays the same (for sanity):
+      // - checkbox checked
+      // - select ALL tentacle squares (data-t="1")
+      // - select NONE of the others
+      const tentacles = capCells.filter(b => b.dataset.t === "1");
+      const non = capCells.filter(b => b.dataset.t !== "1");
+      const ok =
+        robotCheck.checked &&
+        tentacles.every(b => b.classList.contains("selected")) &&
+        non.every(b => !b.classList.contains("selected"));
+
+      if (!ok){
+        noteCaptchaFail(); // increments fail count for escalation
+        capMsg.className = "notice bad";
+        capMsg.textContent = "Verification failed. Please try again. (Seriously.)";
+        return;
+      }
+
+      // Success
+      resetCaptchaFails();
+      closeModal();
+
+      out.className = "notice warn";
+      out.textContent = "ARMING PLATFORM… ACQUIRING TARGET… SYNCHRONIZING ORBITAL WINDOW…";
+      setStatus("ARMED");
+
+      setTimeout(() => {
+        out.className = "notice warn";
+        out.textContent = "FIRING…";
+      }, 1200);
+
+      setTimeout(() => {
+        out.className = "notice good";
+        out.textContent = "STRIKE SUCCESSFUL // TARGET DESTROYED // STATUS: SITE NEUTRALIZED";
+        setStatus("COMPLETE");
+      }, 2600);
+    });
+  </script>
+</body>
+</html>
