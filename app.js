@@ -3,7 +3,7 @@ const STORE_KEY = "helios_site_v4";
 
 // === CONFIG ===
 const CODES = {
-  portal: "That's_no_moon",
+  portal: "Electric_Sheep",
 };
 
 // Western sabotaged site (exact):
@@ -113,3 +113,4 @@ function startCosmeticCountdown(totalSeconds, el){
   render();
   setInterval(render, 1000);
 }
+
